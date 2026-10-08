@@ -1,0 +1,138 @@
+.side-panel {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex: 0 0 68px;
+  width: 68px;
+  height: 100vh;
+  align-self: flex-start;
+  overflow: hidden;
+  background: #0b1220;
+  color: #dbe4f0;
+  transition: flex-basis 0.28s ease, width 0.28s ease;
+}
+
+.side-panel:hover,
+.side-panel:focus-within {
+  flex-basis: 248px;
+  width: 248px;
+}
+
+.panel-content {
+  display: flex;
+  width: 248px;
+  height: 100%;
+  flex-direction: column;
+  padding: 20px 12px;
+  box-sizing: border-box;
+}
+
+.panel-brand {
+  display: flex;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  gap: 14px;
+  padding: 0 8px;
+  color: #fff;
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.panel-brand-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 9px;
+  background: #3346a8;
+  color: #fff;
+}
+
+.panel-caption {
+  margin: 30px 12px 12px;
+  color: #77859a;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+
+.panel-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-links a,
+.panel-help {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  border-radius: 9px;
+  color: #b9c5d6;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.panel-links a:hover,
+.panel-help:hover,
+.panel-links a:focus-visible,
+.panel-help:focus-visible {
+  outline: none;
+  background: #1d2a40;
+  color: #fff;
+}
+
+.panel-links svg,
+.panel-help svg {
+  flex: 0 0 20px;
+}
+
+.panel-label {
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.16s ease;
+}
+
+.side-panel:hover .panel-label,
+.side-panel:focus-within .panel-label {
+  opacity: 1;
+  visibility: visible;
+}
+
+.panel-help {
+  margin-top: auto;
+}
+
+@media (max-width: 520px) {
+  .side-panel {
+    flex-basis: 58px;
+    width: 58px;
+  }
+
+  .panel-content {
+    width: 248px;
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .side-panel:hover,
+  .side-panel:focus-within {
+    flex-basis: 220px;
+    width: 220px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-panel,
+  .panel-label {
+    transition: none;
+  }
+}

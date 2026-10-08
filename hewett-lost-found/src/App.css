@@ -1,0 +1,40 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+.page-layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100dvh;
+}
+
+.page-content {
+  flex: 1;
+  min-height: 0;
+  width: min(100% - 64px, 1100px);
+  margin: 0 auto;
+  padding: 64px 0;
+}
+
+.page-content-login {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 700px) {
+  .page-content {
+    width: min(100% - 36px, 520px);
+    padding: 36px 0;
+  }
+
+  .page-content-login {
+    width: 100%;
+    padding: 0;
+  }
+}
