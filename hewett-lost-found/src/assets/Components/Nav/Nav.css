@@ -74,8 +74,9 @@
 
   .nav-links {
     width: 100%;
-    justify-content: space-between;
-    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 2px 6px;
   }
 
   .nav-links a {
