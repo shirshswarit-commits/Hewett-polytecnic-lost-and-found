@@ -8,7 +8,7 @@ const SPanel = ({ onHome, onLogin }) => {
       <div className="panel-content">
         <a className="panel-brand" href="#home" onClick={onHome} aria-label="Home">
           <span className="panel-brand-icon"><Icon name="brand" size={22} /></span>
-          <span className="panel-label">LOST&amp;FOUND</span>
+          <span className="panel-label">Losyt$found</span>
         </a>
         <span className="panel-caption panel-label">MENU</span>
         <nav className="panel-links" aria-label="Main menu">

@@ -5,9 +5,9 @@ import "./Nav.css";
 const Nav = ({ onHome, onLogin }) => {
   return (
     <header className="topbar">
-      <a className="logo" href="#home" onClick={onHome} aria-label="Lost and Found home">
+      <a className="logo" href="#home" onClick={onHome} aria-label="Losyt$found home">
         <span className="logo-mark"><Icon name="brand" size={22} /></span>
-        <span><strong>LOST&amp;FOUND</strong></span>
+        <span><strong>Losyt$found</strong></span>
       </a>
       <div className="nav-links">
         <a href="#home" onClick={onHome}><Icon name="home" size={17} /><span>Home</span></a>
