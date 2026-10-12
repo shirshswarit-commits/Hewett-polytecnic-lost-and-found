@@ -7,7 +7,7 @@ const Foot = () => {
     <footer className="site-footer" id="contact">
       <div className="footer-brand">
         <span className="logo-mark"><Icon name="brand" size={20} /></span>
-        <span><strong>LOST&amp;FOUND</strong></span>
+        <span><strong>Losyt$found</strong></span>
       </div>
       <p>Helping our campus community reunite with what matters.</p>
       <a className="footer-contact" href="#report-item">
