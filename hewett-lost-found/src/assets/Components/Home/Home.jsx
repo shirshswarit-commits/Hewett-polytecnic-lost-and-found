@@ -1,26 +1,106 @@
 import "./Home.css";
 
-const Home = () => (
+const ReportedItems = ({ items, itemsReady, storageError, onReport }) => {
+  const duplicatedItems = [...items, ...items];
+
+  return (
+    <section className="reported-items" id="lost-items" aria-labelledby="reported-items-title">
+      <div className="reported-items-heading">
+        <div>
+          <span className="eyebrow">CAMPUS LOST &amp; FOUND</span>
+          <h2 id="reported-items-title">Recently reported items</h2>
+          <p>{items.length} {items.length === 1 ? "item" : "items"} shared by the community</p>
+        </div>
+        <button className="button button-primary reported-add-button" type="button" onClick={onReport}>
+          <span aria-hidden="true">+</span> Report item
+        </button>
+      </div>
+
+      {storageError && <p className="items-error" role="alert">{storageError}</p>}
+      {!itemsReady ? (
+        <p className="items-empty">Loading reported items…</p>
+      ) : items.length === 0 ? (
+        <div className="items-empty">
+          <span className="items-empty-icon" aria-hidden="true">✦</span>
+          <span>No reports yet. Be the first to share a lost or found item.</span>
+        </div>
+      ) : (
+        <div className="items-marquee" aria-label={`${items.length} reported items, scrolling horizontally`}>
+          <div className="items-marquee-track">
+            {[0, 1].map((copy) => (
+              <div
+                className="items-marquee-group"
+                key={copy}
+                aria-hidden={copy === 1 ? "true" : undefined}
+                inert={copy === 1}
+              >
+                {duplicatedItems.slice(copy * items.length, (copy + 1) * items.length).map((item) => (
+                  <article className="reported-item-card" key={`${copy}-${item.id}`}>
+                    <div className={`reported-item-image ${item.image_url ? "has-image" : ""}`}>
+                      {item.image_url && (
+                        <img
+                          src={item.image_url}
+                          alt=""
+                          loading="lazy"
+                          onError={(event) => { event.currentTarget.hidden = true; }}
+                        />
+                      )}
+                      <span className="reported-item-fallback" aria-hidden="true">
+                        {item.type === "found" ? "✓" : "?"}
+                      </span>
+                      <span className={`reported-item-status status-${item.type}`}>
+                        {item.type === "found" ? "Found" : "Lost"}
+                      </span>
+                    </div>
+                    <div className="reported-item-details">
+                      <span className="reported-item-category">{item.category || "Other"}</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.location || "Lucknow campus"}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
+const Home = ({ items, itemsReady, storageError, onReport }) => (
   <>
     <section className="hero-section" id="home">
-      <span className="eyebrow">HEWETT POLYTECHNIC</span>
-      <h1>Lost something on campus?</h1>
-      <p>
-        Browse reported items or let the campus community know what you have
-        found.
-      </p>
-      <div className="hero-actions">
-        <a className="button button-primary" href="#lost-items">
-          Browse lost items
-        </a>
-        <a className="button button-secondary" href="#report-item">
-          Report an item
-        </a>
+      <div className="hero-copy">
+        <span className="eyebrow">ALL CAMPUSES OF LUCKNOW</span>
+        <h1>
+          Lost something on campus?
+          <span> Let’s help you find it.</span>
+        </h1>
+        <p>
+          Browse reported items or let the campus community know what you have
+          found.
+        </p>
+        <div className="hero-actions">
+          <a className="button button-primary" href="#lost-items">
+            Browse lost items
+          </a>
+          <button className="button button-secondary" type="button" onClick={onReport}>
+            Report an item
+          </button>
+        </div>
       </div>
     </section>
 
+    <ReportedItems
+      items={items}
+      itemsReady={itemsReady}
+      storageError={storageError}
+      onReport={onReport}
+    />
+
     <section className="item-sections" aria-label="Lost and found">
-      <article className="item-card" id="lost-items">
+      <article className="item-card">
         <span className="card-icon card-icon-lost">?</span>
         <h2>Lost something?</h2>
         <p>Check the lost-items area for belongings reported by others.</p>

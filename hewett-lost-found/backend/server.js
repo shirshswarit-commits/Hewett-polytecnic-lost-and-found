@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 import authRoutes from './src/routes/auth.routes.js';
+import itemRoutes from './src/routes/items.routes.js';
+import uploadRoutes from './src/routes/upload.routes.js';
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.get('/', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+app.use('/api/items', itemRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // ============ 404 HANDLER ============
 app.use((req, res) => {

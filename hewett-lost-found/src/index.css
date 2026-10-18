@@ -17,6 +17,6 @@ body {
 }
 
 a:focus-visible {
-  outline: 3px solid #818cf8;
+  outline: 3px solid var(--theme-accent-text, #818cf8);
   outline-offset: 3px;
 }

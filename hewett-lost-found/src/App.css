@@ -1,15 +1,37 @@
 .app-shell {
+  --theme-dark: var(--theme-panel);
+  --theme-soft: color-mix(in srgb, var(--theme-primary) 11%, white);
+  --theme-tint: color-mix(in srgb, var(--theme-primary) 4%, #f7f8fa);
+  --theme-border: color-mix(in srgb, var(--theme-primary) 18%, #e5eaf1);
+  --theme-muted: color-mix(in srgb, var(--theme-accent-text) 20%, #64748b);
+  --theme-ink: color-mix(in srgb, var(--theme-accent-text) 18%, #172033);
+  --theme-surface: color-mix(in srgb, white 96%, var(--theme-primary));
+  --theme-control: color-mix(in srgb, var(--theme-dark) 90%, var(--theme-primary));
   display: flex;
   min-height: 100vh;
-  background: #f5f7fb;
+  background: var(--theme-tint);
 }
 
 .page-layout {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex: 1;
   flex-direction: column;
   min-width: 0;
   min-height: 100dvh;
+  background-color: var(--theme-tint);
+}
+
+.page-background-shape {
+  position: fixed;
+  z-index: -1;
+  top: 74px;
+  right: 0;
+  bottom: 0;
+  left: 68px;
+  width: calc(100% - 68px);
+  pointer-events: none;
 }
 
 .page-content {
@@ -27,14 +49,65 @@
   padding: 0;
 }
 
-@media (max-width: 700px) {
+.page-content-home {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 20px 24px;
+}
+
+.page-content-theme {
+  width: min(100% - 64px, 900px);
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.page-content-report {
+  width: min(100% - 64px, 900px);
+  margin: 0 auto;
+  padding: 36px 0 56px;
+}
+
+@media (max-width: 720px) {
+  .page-layout {
+    background-image: none;
+    background-color: var(--theme-tint);
+  }
+
+  .page-background-shape {
+    display: none;
+  }
+
   .page-content {
     width: min(100% - 36px, 520px);
     padding: 36px 0;
   }
 
+  @media (max-width: 520px) {
+    .page-background-shape {
+      left: 58px;
+      width: calc(100% - 58px);
+    }
+  }
+
+  .page-content-home {
+    width: 100%;
+    padding: 18px;
+  }
+
   .page-content-login {
     width: 100%;
     padding: 0;
+  }
+
+  .page-content-theme {
+    width: min(100% - 36px, 520px);
+    padding: 30px 0;
+  }
+
+  .page-content-report {
+    width: min(100% - 36px, 520px);
+    padding: 24px 0 40px;
   }
 }
