@@ -1,4 +1,88 @@
+import { useRef, useState } from "react";
 import "./Home.css";
+
+const campusLocations = [
+  {
+    id: "hewett-polytechnic",
+    name: "Hewett Polytechnic",
+    city: "Lucknow",
+    description: "Browse lost and found reports from the Hewett Polytechnic community.",
+    imageUrl: "",
+  },
+];
+
+const LocationCard = ({ location }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <article className={`location-card ${isExpanded ? "is-expanded" : ""}`}>
+      <div className="location-card-image">
+        {location.imageUrl ? (
+          <img src={location.imageUrl} alt={`${location.name} campus`} loading="lazy" />
+        ) : (
+          <svg className="location-placeholder-art" viewBox="0 0 360 190" aria-hidden="true">
+            <path d="M0 150 360 105v85H0Z" fill="var(--theme-primary)" opacity=".12" />
+            <path d="m69 83 111-51 111 51v10H69Z" fill="var(--theme-panel)" />
+            <path d="M88 92h184v76H88z" fill="var(--theme-surface)" stroke="var(--theme-primary)" strokeOpacity=".4" />
+            <path d="M75 168h210M103 101v63m38-63v63m38-63v63m38-63v63m38-63v63" stroke="var(--theme-primary)" strokeOpacity=".62" strokeWidth="5" />
+            <path d="M162 126h36v42h-36z" fill="var(--theme-primary)" opacity=".75" />
+            <circle cx="300" cy="47" r="16" fill="var(--theme-primary)" opacity=".2" />
+          </svg>
+        )}
+        <span className="location-city">{location.city}</span>
+      </div>
+      <div className="location-card-content">
+        <span className="location-card-label">CAMPUS LOCATION</span>
+        <h3>{location.name}</h3>
+        <p>{location.description}</p>
+        {isExpanded && (
+          <div className="location-card-expanded">
+            <span>Lost &amp; found reports</span>
+            <span>Photos and campus details can be added by an administrator.</span>
+          </div>
+        )}
+        <button
+          type="button"
+          className="location-expand-button"
+          aria-expanded={isExpanded}
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+        >
+          {isExpanded ? "Show less" : "View campus"} <span aria-hidden="true">{isExpanded ? "−" : "+"}</span>
+        </button>
+      </div>
+    </article>
+  );
+};
+
+const CampusLocations = () => {
+  const trackRef = useRef(null);
+  const scrollLocations = (direction) => {
+    trackRef.current?.scrollBy({ left: direction * 340, behavior: "smooth" });
+  };
+
+  return (
+    <section className="campus-locations" aria-labelledby="campus-locations-title">
+      <div className="campus-locations-heading">
+        <div>
+          <span className="eyebrow">FIND IT NEAR YOU</span>
+          <h2 id="campus-locations-title">Campus locations</h2>
+          <p>Choose an institute to explore its lost and found community.</p>
+        </div>
+        {campusLocations.length > 1 && (
+          <div className="location-slider-controls" aria-label="Scroll campus locations">
+            <button type="button" onClick={() => scrollLocations(-1)} aria-label="Previous locations">←</button>
+            <button type="button" onClick={() => scrollLocations(1)} aria-label="Next locations">→</button>
+          </div>
+        )}
+      </div>
+      <div className="location-cards-track" ref={trackRef}>
+        {campusLocations.map((location) => (
+          <LocationCard location={location} key={location.id} />
+        ))}
+      </div>
+    </section>
+  );
+};
 
 const ReportedItems = ({ items, itemsReady, storageError, onReport }) => {
   const duplicatedItems = [...items, ...items];
@@ -98,6 +182,8 @@ const Home = ({ items, itemsReady, storageError, onReport }) => (
       storageError={storageError}
       onReport={onReport}
     />
+
+    <CampusLocations />
 
     <section className="item-sections" aria-label="Lost and found">
       <article className="item-card">
