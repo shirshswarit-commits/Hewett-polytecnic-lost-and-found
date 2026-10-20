@@ -2,7 +2,7 @@ import React from "react";
 import Icon from "../Icons/Icon";
 import "./Footer.css";
 
-const Foot = () => {
+const Foot = ({ onReport }) => {
   return (
     <footer className="site-footer" id="contact">
       <div className="footer-brand">
@@ -10,7 +10,7 @@ const Foot = () => {
         <span><strong>Losyt$found</strong></span>
       </div>
       <p>Helping our campus community reunite with what matters.</p>
-      <a className="footer-contact" href="#report-item">
+      <a className="footer-contact" href="#report-item" onClick={onReport}>
         <Icon name="mail" size={16} />
         <span>Report a lost or found item</span>
       </a>

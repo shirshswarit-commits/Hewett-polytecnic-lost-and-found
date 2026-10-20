@@ -1,22 +1,67 @@
 import { useState } from "react";
 import Icon from "../Icons/Icon";
+import { loginUser, signupUser } from "../../../api";
 import "./Login.css";
 
-const Login = () => {
+const Login = ({ auth, onAuthenticated, onLogout }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleForm = () => {
     setIsSignup((current) => !current);
     setMessage("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setMessage("Authentication is not connected yet.");
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email").trim();
+    const password = formData.get("password");
+    const remember = Boolean(formData.get("remember"));
+
+    if (isSignup) {
+      const confirmPassword = formData.get("confirm-password");
+      if (password !== confirmPassword) {
+        setMessage("Passwords do not match.");
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+    try {
+      if (isSignup) {
+        await signupUser({
+          email,
+          password,
+          full_name: formData.get("full_name").trim(),
+        });
+      }
+
+      const session = await loginUser(email, password);
+      onAuthenticated(session, remember);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (auth?.token) {
+    return (
+      <section className="login-page" id="login" aria-label="Account">
+        <div className="login-card signed-in-card">
+          <span className="login-brand-icon"><Icon name="brand" size={22} /></span>
+          <h2>You’re signed in</h2>
+          <p>{auth.user?.full_name || auth.user?.email}</p>
+          <button className="login-primary-btn" type="button" onClick={onLogout}>SIGN OUT</button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="login-page" id="login" aria-label="Login or create account">
@@ -36,12 +81,13 @@ const Login = () => {
 
             <label className="login-input-group">
               <span className="visually-hidden">Email address</span>
-              <input type="email" placeholder="Email Address" autoComplete="email" required />
+              <input name="email" type="email" placeholder="Email Address" autoComplete="email" required />
             </label>
             <label className="login-input-group">
               <span className="visually-hidden">Password</span>
               <input
                 type={showPassword ? "text" : "password"}
+                name="password"
                 placeholder="Password"
                 autoComplete="current-password"
                 required
@@ -58,14 +104,16 @@ const Login = () => {
 
             <div className="login-options">
               <label className="remember-option">
-                <input type="checkbox" />
+                <input name="remember" type="checkbox" />
                 <span className="custom-checkbox" aria-hidden="true" />
                 Remember me
               </label>
               <a href="#contact" className="forgot-link">Forgot password?</a>
             </div>
 
-            <button className="login-primary-btn" type="submit">LOGIN</button>
+            <button className="login-primary-btn" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "PLEASE WAIT…" : "LOGIN"}
+            </button>
             <p className="login-message" role="status">{message}</p>
             <div className="login-social">
               <p>Or continue with</p>
@@ -94,16 +142,17 @@ const Login = () => {
 
             <label className="login-input-group">
               <span className="visually-hidden">Full name</span>
-              <input type="text" placeholder="Full Name" autoComplete="name" required />
+              <input name="full_name" type="text" placeholder="Full Name" autoComplete="name" required />
             </label>
             <label className="login-input-group">
               <span className="visually-hidden">Email address</span>
-              <input type="email" placeholder="Email Address" autoComplete="email" required />
+              <input name="email" type="email" placeholder="Email Address" autoComplete="email" required />
             </label>
             <label className="login-input-group">
               <span className="visually-hidden">Password</span>
               <input
                 type={showPassword ? "text" : "password"}
+                name="password"
                 placeholder="Password"
                 autoComplete="new-password"
                 minLength={8}
@@ -122,6 +171,7 @@ const Login = () => {
               <span className="visually-hidden">Confirm password</span>
               <input
                 type={showConfirmPassword ? "text" : "password"}
+                name="confirm-password"
                 placeholder="Confirm Password"
                 autoComplete="new-password"
                 minLength={8}
@@ -137,7 +187,9 @@ const Login = () => {
               </button>
             </label>
 
-            <button className="login-primary-btn" type="submit">CREATE ACCOUNT</button>
+            <button className="login-primary-btn" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "PLEASE WAIT…" : "CREATE ACCOUNT"}
+            </button>
             <p className="login-message" role="status">{message}</p>
             <p className="login-switch-prompt">
               Already have an account? Use the cross button to return to login.

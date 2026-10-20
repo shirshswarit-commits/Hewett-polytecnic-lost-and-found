@@ -7,13 +7,12 @@
   height: 100vh;
   align-self: flex-start;
   overflow: hidden;
-  background: #0b1220;
-  color: #dbe4f0;
+  background: var(--theme-panel, #0b1220);
+  color: var(--theme-panel-muted, #dbe4f0);
   transition: flex-basis 0.28s ease, width 0.28s ease;
 }
 
-.side-panel:hover,
-.side-panel:focus-within {
+.side-panel.is-expanded {
   flex-basis: 248px;
   width: 248px;
 }
@@ -34,7 +33,7 @@
   align-items: center;
   gap: 14px;
   padding: 0 8px;
-  color: #fff;
+  color: var(--theme-on-panel, #fff);
   font-size: 0.94rem;
   font-weight: 700;
   text-decoration: none;
@@ -47,13 +46,41 @@
   flex: 0 0 32px;
   place-items: center;
   border-radius: 9px;
-  background: #3346a8;
-  color: #fff;
+  background: var(--theme-primary, #3346a8);
+  color: var(--theme-on-primary, #fff);
+}
+
+.panel-toggle {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #b9c5d6;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.panel-toggle:hover,
+.panel-toggle:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--theme-panel, #3346a8) 88%, var(--theme-primary, #3346a8));
+  color: var(--theme-on-panel, #fff);
+}
+
+.panel-toggle svg {
+  flex: 0 0 20px;
 }
 
 .panel-caption {
   margin: 30px 12px 12px;
-  color: #77859a;
+  color: var(--theme-panel-muted, #aab7ca);
   font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -66,6 +93,7 @@
 }
 
 .panel-links a,
+.panel-menu-button,
 .panel-help {
   display: flex;
   min-height: 44px;
@@ -73,23 +101,30 @@
   gap: 16px;
   padding: 0 14px;
   border-radius: 9px;
-  color: #b9c5d6;
+  color: var(--theme-panel-muted, #b9c5d6);
+  border: 0;
+  background: transparent;
   font-size: 0.9rem;
   text-decoration: none;
   white-space: nowrap;
   transition: background 0.18s ease, color 0.18s ease;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .panel-links a:hover,
+.panel-menu-button:hover,
 .panel-help:hover,
 .panel-links a:focus-visible,
+.panel-menu-button:focus-visible,
 .panel-help:focus-visible {
   outline: none;
-  background: #1d2a40;
-  color: #fff;
+  background: color-mix(in srgb, var(--theme-panel, #3346a8) 88%, var(--theme-primary, #3346a8));
+  color: var(--theme-on-panel, #fff);
 }
 
 .panel-links svg,
+.panel-menu-button svg,
 .panel-help svg {
   flex: 0 0 20px;
 }
@@ -101,10 +136,18 @@
   transition: opacity 0.16s ease;
 }
 
-.side-panel:hover .panel-label,
-.side-panel:focus-within .panel-label {
+.side-panel.is-expanded .panel-label {
   opacity: 1;
   visibility: visible;
+}
+
+.side-panel:not(.is-expanded) .panel-brand,
+.side-panel:not(.is-expanded) .panel-toggle,
+.side-panel:not(.is-expanded) .panel-links a,
+.side-panel:not(.is-expanded) .panel-menu-button,
+.side-panel:not(.is-expanded) .panel-help {
+  justify-content: flex-start;
+  padding-left: 14px;
 }
 
 .panel-help {
@@ -123,8 +166,7 @@
     padding-left: 8px;
   }
 
-  .side-panel:hover,
-  .side-panel:focus-within {
+  .side-panel.is-expanded {
     flex-basis: 220px;
     width: 220px;
   }

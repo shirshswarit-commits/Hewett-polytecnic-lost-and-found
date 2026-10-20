@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/items', itemsRoutes);
+app.use('/api/items', itemsRoutes); // Hum itemsRoutes use karenge (plural)
 app.use('/api/upload', uploadRoutes);
 
 // ============ 404 HANDLER ============

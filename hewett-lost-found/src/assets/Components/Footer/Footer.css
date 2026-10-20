@@ -6,14 +6,14 @@
   justify-content: space-between;
   gap: 14px 24px;
   padding: 18px 36px;
-  border-top: 1px solid #e5eaf1;
-  background: #fff;
-  color: #64748b;
+  border-top: 1px solid var(--theme-border, #e5eaf1);
+  background: color-mix(in srgb, white 94%, var(--theme-primary, #3346a8));
+  color: var(--theme-muted, #64748b);
   font-size: 0.82rem;
 }
 
 .footer-brand {
-  color: #172033;
+  color: var(--theme-ink, #172033);
   font-size: 0.88rem;
 }
 
@@ -31,7 +31,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #3346a8;
+  color: var(--theme-primary, #3346a8);
   font-weight: 600;
   text-decoration: none;
 }
