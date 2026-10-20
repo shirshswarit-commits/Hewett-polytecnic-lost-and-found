@@ -2,7 +2,20 @@ import React from "react";
 import Icon from "../Icons/Icon";
 import "./Nav.css";
 
-const Nav = ({ onHome, onLogin, onTheme, onReport, onLogout, isAuthenticated }) => {
+const Nav = ({
+  onHome,
+  onLogin,
+  onTheme,
+  onReport,
+  onMyItems,
+  onAdmin,
+  onChats,
+  onProfile,
+  onTerms,
+  onLogout,
+  isAuthenticated,
+  isAdmin,
+}) => {
   return (
     <header className="topbar">
       <a className="logo" href="#home" onClick={onHome} aria-label="Losyt$found home">
@@ -15,11 +28,18 @@ const Nav = ({ onHome, onLogin, onTheme, onReport, onLogout, isAuthenticated }) 
         <a href="#found-items" onClick={onHome}><Icon name="check" size={17} /><span>Found items</span></a>
         <a href="#report-item" onClick={onReport}><Icon name="plus" size={17} /><span>Report item</span></a>
         {isAuthenticated ? (
-          <button type="button" onClick={onLogout}><Icon name="login" size={17} /><span>Sign out</span></button>
+          <>
+            <button type="button" onClick={onMyItems}><Icon name="search" size={17} /><span>My items</span></button>
+            <button type="button" onClick={onChats}><Icon name="mail" size={17} /><span>Chats</span></button>
+            <button type="button" onClick={onProfile}><Icon name="profile" size={17} /><span>Profile</span></button>
+            {isAdmin && <button type="button" onClick={onAdmin}><Icon name="check" size={17} /><span>Admin</span></button>}
+            <button type="button" onClick={onLogout}><Icon name="login" size={17} /><span>Sign out</span></button>
+          </>
         ) : (
           <a href="#login" onClick={onLogin}><Icon name="login" size={17} /><span>Login</span></a>
         )}
         <a href="#theme" onClick={onTheme}><Icon name="theme" size={17} /><span>Theme</span></a>
+        <a href="#terms" onClick={onTerms}><Icon name="terms" size={17} /><span>Terms</span></a>
         <a href="#contact" onClick={onHome}><Icon name="mail" size={17} /><span>Contact</span></a>
       </div>
     </header>

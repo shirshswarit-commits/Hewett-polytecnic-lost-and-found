@@ -12,7 +12,13 @@ const request = async (path, { token, ...options } = {}) => {
   const result = await response.json();
 
   if (!response.ok || !result.success) {
-    throw new Error(result.message || `Request failed (${response.status}).`);
+    const message = result.message || `Request failed (${response.status}).`;
+    if (path.startsWith("/chat/") && /chat_threads|chat_messages|schema cache/i.test(message)) {
+      throw new Error(
+        "Chat tables are not set up in Supabase yet. Run backend/supabase/migrations/20261020_item_chat.sql in the Supabase SQL Editor, then retry.",
+      );
+    }
+    throw new Error(message);
   }
 
   return result.data;
@@ -22,11 +28,23 @@ export const fetchItems = async () => {
   const data = await request("/items");
   return {
     ...data,
-    items: data.items.map((item) => ({
-      ...item,
-      image_url: item.image_urls?.[0] || "",
-    })),
+    items: data.items.map(normalizeItem),
   };
+};
+
+export const fetchItem = async (id) => {
+  const data = await request(`/items/${encodeURIComponent(id)}`);
+  return { ...data, item: normalizeItem(data.item) };
+};
+
+const normalizeItem = (item) => ({
+  ...item,
+  image_url: item.image_urls?.[0] || item.image_url || "",
+});
+
+export const fetchMyItems = async (token) => {
+  const data = await request("/items/my", { token });
+  return { ...data, items: data.items.map(normalizeItem) };
 };
 
 export const uploadItemImages = async (files, token) => {
@@ -63,10 +81,7 @@ export const createItem = async (item, token) => {
   });
   return {
     ...data,
-    item: {
-      ...data.item,
-      image_url: data.item.image_urls?.[0] || "",
-    },
+    item: normalizeItem(data.item),
   };
 };
 
@@ -79,3 +94,47 @@ export const signupUser = (user) => request("/auth/signup", {
   method: "POST",
   body: JSON.stringify(user),
 });
+
+export const requestPasswordReset = (email) => request("/auth/forgot-password", {
+  method: "POST",
+  body: JSON.stringify({ email }),
+});
+
+export const resetPassword = (token, password) => request("/auth/reset-password", {
+  method: "POST",
+  body: JSON.stringify({ token, password }),
+});
+
+export const fetchProfile = (token) => request("/auth/profile", { token });
+
+export const updateProfile = (profile, token) => request("/auth/profile", {
+  method: "PATCH",
+  token,
+  body: JSON.stringify(profile),
+});
+
+export const deleteItem = (id, token) => request(`/items/${encodeURIComponent(id)}`, {
+  method: "DELETE",
+  token,
+});
+
+export const startItemChat = (itemId, token) => request(`/chat/items/${encodeURIComponent(itemId)}`, {
+  method: "POST",
+  token,
+});
+
+export const fetchChatThreads = (token) => request("/chat/threads", { token });
+
+export const fetchChatMessages = (threadId, token) => request(
+  `/chat/threads/${encodeURIComponent(threadId)}/messages`,
+  { token },
+);
+
+export const sendChatMessage = (threadId, message, token) => request(
+  `/chat/threads/${encodeURIComponent(threadId)}/messages`,
+  {
+    method: "POST",
+    token,
+    body: JSON.stringify(message),
+  },
+);

@@ -7,7 +7,32 @@ import Home from './assets/Components/Home/Home'
 import Login from './assets/Components/Login/Login'
 import Theme from './assets/Components/Theme/Theme'
 import ReportItem from './assets/Components/ReportItem/ReportItem'
-import { createItem, fetchItems } from './api'
+import Chat from './assets/Components/Chat/Chat'
+import ItemDetail from './assets/Components/ItemDetail/ItemDetail'
+import Profile from './assets/Components/Profile/Profile'
+import Terms from './assets/Components/Terms/Terms'
+import {
+  createItem,
+  deleteItem,
+  fetchItem,
+  fetchItems,
+  fetchMyItems,
+  startItemChat,
+} from './api'
+
+const readRecoveryToken = () => {
+  const hash = window.location.hash.slice(1)
+  const params = new URLSearchParams(hash)
+  return params.get('type') === 'recovery' ? params.get('access_token') : ''
+}
+
+const hasAdminAccess = (user) => (
+  user?.is_admin === true
+  || user?.isAdmin === true
+  || ['admin', 'administrator'].includes(
+    String(user?.role || user?.app_metadata?.role || '').toLowerCase(),
+  )
+)
 
 const getLuminance = (hex) => {
   const value = Number.parseInt(hex.slice(1), 16)
@@ -58,12 +83,20 @@ const readStoredAuth = () => {
 }
 
 function App() {
-  const [activePage, setActivePage] = useState('home')
+  const [recoveryToken, setRecoveryToken] = useState(readRecoveryToken)
+  const [activePage, setActivePage] = useState(() => readRecoveryToken() ? 'reset-password' : 'home')
   const [auth, setAuth] = useState(readStoredAuth)
   const [pendingPage, setPendingPage] = useState('home')
   const [items, setItems] = useState([])
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [itemDetailError, setItemDetailError] = useState('')
+  const [selectedThreadId, setSelectedThreadId] = useState('')
+  const [pendingChatItem, setPendingChatItem] = useState(null)
+  const [myItems, setMyItems] = useState([])
+  const [myItemsReady, setMyItemsReady] = useState(false)
   const [itemsReady, setItemsReady] = useState(false)
   const [itemsError, setItemsError] = useState('')
+  const isAdmin = hasAdminAccess(auth?.user)
   const [themeColor, setThemeColor] = useState(() => {
     const savedColor = window.localStorage.getItem('hewett-theme-color')
     return /^#[\da-f]{6}$/i.test(savedColor || '') ? savedColor : '#56375f'
@@ -98,10 +131,102 @@ function App() {
     setActivePage('report')
   }
 
+  const openItem = async (item) => {
+    setSelectedItem(item)
+    setItemDetailError('')
+    setActivePage('item-detail')
+    try {
+      const { item: latestItem } = await fetchItem(item.id)
+      setSelectedItem(latestItem)
+    } catch (error) {
+      setItemDetailError(`Could not load item details: ${error.message}`)
+    }
+  }
+
+  const openChats = () => {
+    if (!auth?.token) {
+      setPendingPage('chats')
+      setActivePage('login')
+      return
+    }
+    setSelectedThreadId('')
+    setActivePage('chats')
+  }
+
+  const startChatForItem = async (item, token = auth?.token) => {
+    if (!token) {
+      setPendingChatItem(item)
+      setPendingPage('start-chat')
+      setActivePage('login')
+      return
+    }
+
+    setItemDetailError('')
+    try {
+      const { thread } = await startItemChat(item.id, token)
+      setSelectedThreadId(thread.id)
+      setActivePage('chats')
+    } catch (error) {
+      setItemDetailError(`Could not open chat: ${error.message}`)
+    }
+  }
+
+  const openMyItems = async () => {
+    if (!auth?.token) {
+      setPendingPage('my-items')
+      setActivePage('login')
+      return
+    }
+
+    setActivePage('my-items')
+    setMyItemsReady(false)
+    setItemsError('')
+    try {
+      const { items: loadedItems } = await fetchMyItems(auth.token)
+      setMyItems(loadedItems)
+    } catch (error) {
+      setItemsError(`Could not load your items: ${error.message}`)
+    } finally {
+      setMyItemsReady(true)
+    }
+  }
+
+  const openAdmin = () => {
+    if (isAdmin) setActivePage('admin')
+  }
+
+  const openProfile = () => {
+    if (auth?.token) setActivePage('profile')
+  }
+
+  const updateAuthenticatedProfile = (user) => {
+    const updatedAuth = { ...auth, user }
+    setAuth(updatedAuth)
+    try {
+      const storage = window.localStorage.getItem('hewett-auth')
+        ? window.localStorage
+        : window.sessionStorage
+      storage.setItem('hewett-auth', JSON.stringify(updatedAuth))
+    } catch (error) {
+      setItemsError(`Could not save your profile session: ${error.message}`)
+    }
+  }
+
   const handleAuthenticated = (session, remember) => {
     const authState = { token: session.token, user: session.user }
     setAuth(authState)
     setActivePage(pendingPage)
+    if (pendingPage === 'my-items') {
+      setMyItemsReady(false)
+      fetchMyItems(session.token)
+        .then(({ items: loadedItems }) => setMyItems(loadedItems))
+        .catch((error) => setItemsError(`Could not load your items: ${error.message}`))
+        .finally(() => setMyItemsReady(true))
+    }
+    if (pendingPage === 'start-chat' && pendingChatItem) {
+      startChatForItem(pendingChatItem, session.token)
+      setPendingChatItem(null)
+    }
     try {
       window.localStorage.removeItem('hewett-auth')
       window.sessionStorage.removeItem('hewett-auth')
@@ -115,8 +240,26 @@ function App() {
   const submitItem = async (item, token) => {
     const { item: createdItem } = await createItem(item, token)
     setItems((currentItems) => [createdItem, ...currentItems])
+    setMyItems((currentItems) => [createdItem, ...currentItems])
     setActivePage('home')
     return createdItem
+  }
+
+  const removeItem = async (item) => {
+    if (!window.confirm(`Delete "${item.title}"? This cannot be undone.`)) return
+    try {
+      await deleteItem(item.id, auth.token)
+      setItems((currentItems) => currentItems.filter(({ id }) => id !== item.id))
+      setMyItems((currentItems) => currentItems.filter(({ id }) => id !== item.id))
+    } catch (error) {
+      setItemsError(`Could not delete this item: ${error.message}`)
+    }
+  }
+
+  const finishPasswordRecovery = () => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    setRecoveryToken('')
+    setActivePage('login')
   }
 
   const logout = () => {
@@ -146,8 +289,14 @@ function App() {
         onLogin={() => setActivePage('login')}
         onTheme={() => setActivePage('theme')}
         onReport={openReport}
+        onMyItems={openMyItems}
+        onAdmin={openAdmin}
+        onChats={openChats}
+        onProfile={openProfile}
+        onTerms={() => setActivePage('terms')}
         onLogout={logout}
         isAuthenticated={Boolean(auth?.token)}
+        isAdmin={isAdmin}
       />
       <div className="page-layout">
         <svg
@@ -164,28 +313,76 @@ function App() {
           onLogin={() => setActivePage('login')}
           onTheme={() => setActivePage('theme')}
           onReport={openReport}
+          onMyItems={openMyItems}
+          onAdmin={openAdmin}
+          onChats={openChats}
+          onProfile={openProfile}
+          onTerms={() => setActivePage('terms')}
           onLogout={logout}
           isAuthenticated={Boolean(auth?.token)}
+          isAdmin={isAdmin}
         />
-        <main className={`page-content ${activePage === 'login' ? 'page-content-login' : activePage === 'home' ? 'page-content-home' : activePage === 'theme' ? 'page-content-theme' : 'page-content-report'}`}>
+        <main className={`page-content ${activePage === 'login' || activePage === 'reset-password' ? 'page-content-login' : activePage === 'home' || activePage === 'browse' || activePage === 'my-items' || activePage === 'admin' || activePage === 'item-detail' || activePage === 'chats' ? 'page-content-home' : activePage === 'theme' ? 'page-content-theme' : 'page-content-report'}`}>
           {activePage === 'login' ? (
             <Login
               auth={auth}
               onAuthenticated={handleAuthenticated}
               onLogout={logout}
             />
+          ) : activePage === 'reset-password' ? (
+            <Login
+              recoveryToken={recoveryToken}
+              onRecoveryComplete={finishPasswordRecovery}
+            />
           ) : activePage === 'theme' ? (
             <Theme color={themeColor} onColorChange={setThemeColor} />
+          ) : activePage === 'profile' && auth?.token ? (
+            <Profile auth={auth} onProfileUpdated={updateAuthenticatedProfile} />
+          ) : activePage === 'terms' ? (
+            <Terms />
           ) : activePage === 'report' ? (
             <ReportItem
               token={auth?.token}
               onSubmit={submitItem}
             />
+          ) : activePage === 'item-detail' ? (
+            selectedItem ? (
+              <ItemDetail
+                item={selectedItem}
+                currentUserId={auth?.user?.id}
+                onBack={() => setActivePage('home')}
+                onStartChat={startChatForItem}
+                error={itemDetailError}
+              />
+            ) : (
+              <p className="items-empty" role="status">Loading item details…</p>
+            )
+          ) : activePage === 'chats' ? (
+            <Chat
+              token={auth?.token}
+              userId={auth?.user?.id}
+              initialThreadId={selectedThreadId}
+              onBack={() => setActivePage('home')}
+              onThreadChange={setSelectedThreadId}
+            />
           ) : (
-            <Home items={items} itemsReady={itemsReady} storageError={itemsError} onReport={openReport} />
+            <Home
+              page={activePage}
+              items={items}
+              itemsReady={itemsReady}
+              storageError={itemsError}
+              onReport={openReport}
+              onBrowseAll={() => setActivePage('browse')}
+              myItems={myItems}
+              myItemsReady={myItemsReady}
+              canManageAllItems={isAdmin}
+              isAuthenticated={Boolean(auth?.token)}
+              onDeleteItem={removeItem}
+              onItemClick={openItem}
+            />
           )}
         </main>
-        {activePage !== 'login' && <Foot onReport={() => setActivePage('report')} />}
+        {activePage !== 'login' && activePage !== 'reset-password' && <Foot onReport={openReport} />}
       </div>
     </div>
   )
