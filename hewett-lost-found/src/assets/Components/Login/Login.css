@@ -46,6 +46,16 @@
   max-width: 220px;
 }
 
+.reset-password-card {
+  display: flex;
+  height: auto;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+}
+
 .login-card-inner {
   position: absolute;
   inset: 0;
@@ -174,8 +184,9 @@
 
 .remember-option input {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
   opacity: 0;
 }
 
@@ -185,16 +196,22 @@
   height: 18px;
   place-items: center;
   margin-right: 8px;
+  border: 1px solid color-mix(in srgb, var(--theme-on-panel) 55%, transparent);
   border-radius: 5px;
-  background: var(--theme-control, #1a1a1a);
-  box-shadow: inset 3px 3px 6px color-mix(in srgb, var(--theme-panel) 92%, black), inset -3px -3px 6px color-mix(in srgb, var(--theme-panel) 90%, white);
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .remember-option input:checked + .custom-checkbox::after {
-  color: var(--theme-primary, #3b82f6);
+  color: var(--theme-on-primary, #fff);
   content: "✓";
   font-size: 12px;
   font-weight: 700;
+}
+
+.remember-option input:checked + .custom-checkbox {
+  border-color: var(--theme-primary);
+  background: var(--theme-primary);
 }
 
 .remember-option input:focus-visible + .custom-checkbox {
@@ -203,12 +220,22 @@
 }
 
 .forgot-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--theme-primary, #3b82f6);
+  cursor: pointer;
+  font: inherit;
   text-decoration: none;
 }
 
 .forgot-link:hover {
   text-decoration: underline;
+}
+
+.forgot-link:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .login-primary-btn,

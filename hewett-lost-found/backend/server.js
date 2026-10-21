@@ -1,6 +1,5 @@
-import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
+<<<<<<< HEAD
 
 // Import Routes
 import authRoutes from './src/routes/auth.routes.js';
@@ -70,9 +69,15 @@ app.use((err, req, res, next) => {
 });
 
 // ============ SERVER START ============
+=======
+import app from './app.js';
+
+dotenv.config();
+
+>>>>>>> 5b588c02b0fba8896f4f434c816bae370f7809eb
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
 });

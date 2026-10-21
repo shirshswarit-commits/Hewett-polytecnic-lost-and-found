@@ -171,18 +171,39 @@ export const deleteItem = async (req, res) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    // Check karo item tumhara hai
-    const { data: existing } = await supabaseAdmin
+    const { data: existing, error: lookupError } = await supabaseAdmin
       .from('items')
       .select('user_id')
       .eq('id', id)
       .single();
 
+    if (lookupError) {
+      return sendError(res, lookupError.code === 'PGRST116' ? 'Item not found' : lookupError.message, lookupError.code === 'PGRST116' ? 404 : 400);
+    }
     if (!existing) {
       return sendError(res, 'Item not found', 404);
     }
 
-    if (existing.user_id !== userId) {
+    let isAdmin = ['admin', 'administrator'].includes(
+      String(req.user.app_metadata?.role || '').toLowerCase(),
+    );
+
+    if (!isAdmin) {
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        return sendError(res, profileError.message, 400);
+      }
+      isAdmin = profile?.is_admin === true
+        || profile?.isAdmin === true
+        || ['admin', 'administrator'].includes(String(profile?.role || '').toLowerCase());
+    }
+
+    if (existing.user_id !== userId && !isAdmin) {
       return sendError(res, 'You can only delete your own items', 403);
     }
 

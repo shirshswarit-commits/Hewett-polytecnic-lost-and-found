@@ -84,21 +84,253 @@ const CampusLocations = () => {
   );
 };
 
-const ReportedItems = ({ items, itemsReady, storageError, onReport }) => {
-  const duplicatedItems = [...items, ...items];
+const ItemCard = ({ item, onDelete, canDelete, onItemClick }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <section className="reported-items" id="lost-items" aria-labelledby="reported-items-title">
+    <article
+      className="reported-item-card"
+      tabIndex={0}
+      aria-label={`Open details for ${item.title}`}
+      onClick={() => onItemClick?.(item)}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onItemClick?.(item);
+        }
+      }}
+    >
+      <button
+        className={`reported-item-image ${item.image_url ? "has-image" : ""}`}
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onItemClick?.(item);
+        }}
+        aria-label={`View details for ${item.title}`}
+      >
+        {item.image_url && (
+          <img
+            src={item.image_url}
+            alt={item.title}
+            loading="lazy"
+            onError={(event) => { event.currentTarget.hidden = true; }}
+          />
+        )}
+        <span className="reported-item-fallback" aria-hidden="true">
+          {item.type === "found" ? "✓" : "?"}
+        </span>
+        <span className={`reported-item-status status-${item.type}`}>
+          {item.type === "found" ? "Found" : "Lost"}
+        </span>
+      </button>
+      <div className="reported-item-details">
+        <span className="reported-item-category">{item.category || "Other"}</span>
+        <h3 title={item.title}>
+          <button className="reported-item-title-button" type="button" onClick={(event) => {
+            event.stopPropagation();
+            onItemClick?.(item);
+          }}>
+            {item.title}
+          </button>
+        </h3>
+        <p>{item.location || "Lucknow campus"}</p>
+        {isExpanded && (
+          <div className="reported-item-expanded">
+            {item.description && <p>{item.description}</p>}
+            <span>{item.date_lost_found ? `Reported date: ${item.date_lost_found}` : "Date not provided"}</span>
+          </div>
+        )}
+        <div className="reported-item-actions">
+          <button
+            className="item-expand-button"
+            type="button"
+            aria-expanded={isExpanded}
+            aria-label={`${isExpanded ? "Hide" : "Show"} details for ${item.title}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsExpanded((expanded) => !expanded);
+            }}
+          >
+            <span>{isExpanded ? "Hide details" : "Details"}</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              {isExpanded
+                ? <path d="m6 9 6 6 6-6" />
+                : <path d="m9 6 6 6-6 6" />}
+            </svg>
+          </button>
+          {canDelete && (
+            <button className="item-delete-button" type="button" onClick={(event) => {
+              event.stopPropagation();
+              onDelete(item);
+            }}>
+              Delete
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const ItemLane = ({ title, type, items, onDelete, canDelete, onItemClick }) => {
+  const trackRef = useRef(null);
+  const scroll = (direction) => trackRef.current?.scrollBy({
+    left: direction * Math.max(trackRef.current.clientWidth * 0.8, 220),
+    behavior: "smooth",
+  });
+
+  return (
+    <section className="reported-items-lane" id={`${type}-items`} aria-labelledby={`${type}-items-title`}>
       <div className="reported-items-heading">
         <div>
-          <span className="eyebrow">CAMPUS LOST &amp; FOUND</span>
-          <h2 id="reported-items-title">Recently reported items</h2>
-          <p>{items.length} {items.length === 1 ? "item" : "items"} shared by the community</p>
+          <span className="eyebrow">{type === "lost" ? "MISSING BELONGINGS" : "HELP SOMEONE RECLAIM IT"}</span>
+          <h2 id={`${type}-items-title`}>{title}</h2>
+          <p>{items.length} {items.length === 1 ? "report" : "reports"}</p>
         </div>
-        <button className="button button-primary reported-add-button" type="button" onClick={onReport}>
-          <span aria-hidden="true">+</span> Report item
-        </button>
+        <div className="item-lane-controls" aria-label={`Browse ${title.toLowerCase()}`}>
+          <button type="button" onClick={() => scroll(-1)} aria-label={`Scroll ${title.toLowerCase()} left`}>‹</button>
+          <button type="button" onClick={() => scroll(1)} aria-label={`Scroll ${title.toLowerCase()} right`}>›</button>
+        </div>
       </div>
+      {items.length === 0 ? (
+        <div className="items-empty">No {type} reports yet.</div>
+      ) : (
+        <div className="items-horizontal-track" ref={trackRef} tabIndex="0" aria-label={`${title} reports`}>
+          {items.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onDelete={onDelete}
+              canDelete={canDelete}
+              onItemClick={onItemClick}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+const ItemsPage = ({
+  title,
+  description,
+  items,
+  itemsReady,
+  storageError,
+  onDelete,
+  canDelete,
+  onItemClick,
+}) => (
+  <section className="items-page" aria-labelledby="items-page-title">
+    <div className="items-page-heading">
+      <span className="eyebrow">CAMPUS LOST &amp; FOUND</span>
+      <h1 id="items-page-title">{title}</h1>
+      <p>{description}</p>
+    </div>
+    {storageError && <p className="items-error" role="alert">{storageError}</p>}
+    {!itemsReady ? (
+      <p className="items-empty">Loading items…</p>
+    ) : items.length === 0 ? (
+      <div className="items-empty">No items to show yet.</div>
+    ) : (
+      <div className="items-grid">
+        {items.map((item) => (
+          <ItemCard
+            key={item.id}
+            item={item}
+            onDelete={onDelete}
+            canDelete={canDelete}
+            onItemClick={onItemClick}
+          />
+        ))}
+      </div>
+    )}
+  </section>
+);
+
+const Home = ({
+  items,
+  itemsReady,
+  storageError,
+  onReport,
+  page = "home",
+  myItems = [],
+  myItemsReady = false,
+  canManageAllItems = false,
+  isAuthenticated = false,
+  onDeleteItem,
+  onBrowseAll,
+  onItemClick,
+}) => {
+  if (page === "browse") {
+    return (
+      <ItemsPage
+        title="Browse reported items"
+        description="Every item currently reported by the campus community."
+        items={items}
+        itemsReady={itemsReady}
+        storageError={storageError}
+        onItemClick={onItemClick}
+      />
+    );
+  }
+  if (page === "my-items") {
+    return (
+      <ItemsPage
+        title="My reported items"
+        description="Reports you have added to the campus lost-and-found."
+        items={myItems}
+        itemsReady={myItemsReady}
+        storageError={storageError}
+        onDelete={onDeleteItem}
+        canDelete
+        onItemClick={onItemClick}
+      />
+    );
+  }
+  if (page === "admin") {
+    return (
+      <ItemsPage
+        title="Admin item management"
+        description="Review community reports and remove inappropriate or outdated items."
+        items={items}
+        itemsReady={itemsReady}
+        storageError={storageError}
+        onDelete={onDeleteItem}
+        canDelete={canManageAllItems}
+        onItemClick={onItemClick}
+      />
+    );
+  }
+
+  const lostItems = items.filter((item) => item.type === "lost");
+  const foundItems = items.filter((item) => item.type === "found");
+
+  return (
+    <>
+      {!isAuthenticated && <section className="hero-section" id="home">
+        <div className="hero-copy">
+          <span className="eyebrow">ALL CAMPUSES OF LUCKNOW</span>
+          <h1>
+            Lost something on campus?
+            <span> Let’s help you find it.</span>
+          </h1>
+          <p>
+            Browse reported items or let the campus community know what you have
+            found.
+          </p>
+          <div className="hero-actions">
+            <button className="button button-primary" type="button" onClick={onBrowseAll}>
+              Browse all items
+            </button>
+            <button className="button button-secondary" type="button" onClick={onReport}>
+              Report an item
+            </button>
+          </div>
+        </div>
+      </section>}
 
       {storageError && <p className="items-error" role="alert">{storageError}</p>}
       {!itemsReady ? (
@@ -109,108 +341,49 @@ const ReportedItems = ({ items, itemsReady, storageError, onReport }) => {
           <span>No reports yet. Be the first to share a lost or found item.</span>
         </div>
       ) : (
-        <div className="items-marquee" aria-label={`${items.length} reported items, scrolling horizontally`}>
-          <div className="items-marquee-track">
-            {[0, 1].map((copy) => (
-              <div
-                className="items-marquee-group"
-                key={copy}
-                aria-hidden={copy === 1 ? "true" : undefined}
-                inert={copy === 1}
-              >
-                {duplicatedItems.slice(copy * items.length, (copy + 1) * items.length).map((item) => (
-                  <article className="reported-item-card" key={`${copy}-${item.id}`}>
-                    <div className={`reported-item-image ${item.image_url ? "has-image" : ""}`}>
-                      {item.image_url && (
-                        <img
-                          src={item.image_url}
-                          alt=""
-                          loading="lazy"
-                          onError={(event) => { event.currentTarget.hidden = true; }}
-                        />
-                      )}
-                      <span className="reported-item-fallback" aria-hidden="true">
-                        {item.type === "found" ? "✓" : "?"}
-                      </span>
-                      <span className={`reported-item-status status-${item.type}`}>
-                        {item.type === "found" ? "Found" : "Lost"}
-                      </span>
-                    </div>
-                    <div className="reported-item-details">
-                      <span className="reported-item-category">{item.category || "Other"}</span>
-                      <h3>{item.title}</h3>
-                      <p>{item.location || "Lucknow campus"}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ))}
+        <section className="reported-items" aria-label="Recently reported items">
+          <div className="reported-overview-heading">
+            <div>
+              <span className="eyebrow">CAMPUS LOST &amp; FOUND</span>
+              <h2>Recently reported items</h2>
+              <p>{items.length} {items.length === 1 ? "item" : "items"} shared by the community</p>
+            </div>
+            <button className="browse-all-button" type="button" onClick={onBrowseAll}>
+              Browse all <span aria-hidden="true">→</span>
+            </button>
           </div>
-        </div>
+          <ItemLane title="Lost items" type="lost" items={lostItems} onItemClick={onItemClick} />
+          <ItemLane title="Found items" type="found" items={foundItems} onItemClick={onItemClick} />
+        </section>
       )}
-    </section>
+
+      {!isAuthenticated && <CampusLocations />}
+
+      {!isAuthenticated && <section className="item-sections" aria-label="Lost and found">
+        <article className="item-card">
+          <span className="card-icon card-icon-lost">?</span>
+          <h2>Lost something?</h2>
+          <p>Check reports for belongings reported missing by others.</p>
+          <a href="#lost-items">Browse lost reports</a>
+        </article>
+        <article className="item-card">
+          <span className="card-icon card-icon-found">✓</span>
+          <h2>Found something?</h2>
+          <p>Help reunite a campus community member with their item.</p>
+          <a href="#found-items">Browse found reports</a>
+        </article>
+      </section>}
+
+      {!isAuthenticated && <section className="report-banner" id="report-item">
+        <div>
+          <span className="eyebrow">HELP THE COMMUNITY</span>
+          <h2>Every report can make a difference.</h2>
+          <p>Share lost and found reports with the campus community.</p>
+        </div>
+        <button className="button button-light" type="button" onClick={onReport}>Report an item</button>
+      </section>}
+    </>
   );
 };
-
-const Home = ({ items, itemsReady, storageError, onReport }) => (
-  <>
-    <section className="hero-section" id="home">
-      <div className="hero-copy">
-        <span className="eyebrow">ALL CAMPUSES OF LUCKNOW</span>
-        <h1>
-          Lost something on campus?
-          <span> Let’s help you find it.</span>
-        </h1>
-        <p>
-          Browse reported items or let the campus community know what you have
-          found.
-        </p>
-        <div className="hero-actions">
-          <a className="button button-primary" href="#lost-items">
-            Browse lost items
-          </a>
-          <button className="button button-secondary" type="button" onClick={onReport}>
-            Report an item
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <ReportedItems
-      items={items}
-      itemsReady={itemsReady}
-      storageError={storageError}
-      onReport={onReport}
-    />
-
-    <CampusLocations />
-
-    <section className="item-sections" aria-label="Lost and found">
-      <article className="item-card">
-        <span className="card-icon card-icon-lost">?</span>
-        <h2>Lost something?</h2>
-        <p>Check the lost-items area for belongings reported by others.</p>
-        <a href="#report-item">See what to do next</a>
-      </article>
-      <article className="item-card" id="found-items">
-        <span className="card-icon card-icon-found">✓</span>
-        <h2>Found something?</h2>
-        <p>Help reunite a campus community member with their item.</p>
-        <a href="#report-item">Tell us about it</a>
-      </article>
-    </section>
-
-    <section className="report-banner" id="report-item">
-      <div>
-        <span className="eyebrow">HELP THE COMMUNITY</span>
-        <h2>Every report can make a difference.</h2>
-        <p>Visit the campus help desk to report a lost or found item.</p>
-      </div>
-      <a className="button button-light" href="#contact">
-        Contact the help desk
-      </a>
-    </section>
-  </>
-);
 
 export default Home;

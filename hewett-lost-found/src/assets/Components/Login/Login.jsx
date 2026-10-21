@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Icon from "../Icons/Icon";
-import { loginUser, signupUser } from "../../../api";
+import { loginUser, requestPasswordReset, resetPassword, signupUser } from "../../../api";
 import "./Login.css";
 
-const Login = ({ auth, onAuthenticated, onLogout }) => {
+const Login = ({ auth, onAuthenticated, onLogout, recoveryToken, onRecoveryComplete }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const emailInputRef = useRef(null);
 
   const toggleForm = () => {
     setIsSignup((current) => !current);
@@ -50,6 +52,75 @@ const Login = ({ auth, onAuthenticated, onLogout }) => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const email = emailInputRef.current?.value.trim();
+    if (!email) {
+      setMessage("Enter your email address first, then choose Forgot password.");
+      emailInputRef.current?.focus();
+      return;
+    }
+
+    setIsSendingReset(true);
+    setMessage("");
+    try {
+      await requestPasswordReset(email);
+      setMessage("If an account exists for that email, a password reset link has been sent.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
+  const handlePasswordReset = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const password = formData.get("new-password");
+    if (password !== formData.get("confirm-password")) {
+      setMessage("Passwords do not match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+    try {
+      await resetPassword(recoveryToken, password);
+      setMessage("Password updated. You can now sign in with your new password.");
+      event.currentTarget.reset();
+      window.setTimeout(onRecoveryComplete, 1600);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (recoveryToken) {
+    return (
+      <section className="login-page" id="reset-password" aria-label="Set a new password">
+        <form className="login-card reset-password-card" onSubmit={handlePasswordReset}>
+          <div className="login-header">
+            <span className="login-brand-icon"><Icon name="brand" size={22} /></span>
+            <h2>Choose a new password</h2>
+            <p>Enter a new password for your account.</p>
+          </div>
+          <label className="login-input-group">
+            <span className="visually-hidden">New password</span>
+            <input name="new-password" type="password" placeholder="New password" minLength={8} required />
+          </label>
+          <label className="login-input-group">
+            <span className="visually-hidden">Confirm new password</span>
+            <input name="confirm-password" type="password" placeholder="Confirm new password" minLength={8} required />
+          </label>
+          <button className="login-primary-btn" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "PLEASE WAIT…" : "UPDATE PASSWORD"}
+          </button>
+          <p className="login-message" role="status">{message}</p>
+        </form>
+      </section>
+    );
+  }
+
   if (auth?.token) {
     return (
       <section className="login-page" id="login" aria-label="Account">
@@ -81,7 +152,7 @@ const Login = ({ auth, onAuthenticated, onLogout }) => {
 
             <label className="login-input-group">
               <span className="visually-hidden">Email address</span>
-              <input name="email" type="email" placeholder="Email Address" autoComplete="email" required />
+              <input ref={emailInputRef} name="email" type="email" placeholder="Email Address" autoComplete="email" required />
             </label>
             <label className="login-input-group">
               <span className="visually-hidden">Password</span>
@@ -108,7 +179,14 @@ const Login = ({ auth, onAuthenticated, onLogout }) => {
                 <span className="custom-checkbox" aria-hidden="true" />
                 Remember me
               </label>
-              <a href="#contact" className="forgot-link">Forgot password?</a>
+              <button
+                className="forgot-link"
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isSendingReset}
+              >
+                {isSendingReset ? "Sending…" : "Forgot password?"}
+              </button>
             </div>
 
             <button className="login-primary-btn" type="submit" disabled={isSubmitting}>

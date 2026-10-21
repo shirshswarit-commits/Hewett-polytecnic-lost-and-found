@@ -44,6 +44,6 @@
   .site-footer {
     align-items: flex-start;
     flex-direction: column;
-    padding: 20px 18px;
+    padding: 20px 18px calc(88px + env(safe-area-inset-bottom));
   }
 }
