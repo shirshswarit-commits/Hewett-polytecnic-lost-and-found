@@ -19,7 +19,7 @@
 
 .panel-content {
   display: flex;
-  width: 248px;
+  width: 100%;
   height: 100%;
   flex-direction: column;
   overflow-y: auto;
@@ -61,17 +61,18 @@
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: #b9c5d6;
+  color: var(--theme-panel-muted, #b9c5d6);
   cursor: pointer;
   font: inherit;
   text-align: left;
   white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 .panel-toggle:hover,
 .panel-toggle:focus-visible {
   outline: none;
-  background: color-mix(in srgb, var(--theme-panel, #3346a8) 88%, var(--theme-primary, #3346a8));
+  background: color-mix(in srgb, var(--theme-on-panel, #fff) 14%, var(--theme-panel, #0b1220));
   color: var(--theme-on-panel, #fff);
 }
 
@@ -109,7 +110,7 @@
   font-size: 0.9rem;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
   cursor: pointer;
   font-family: inherit;
 }
@@ -123,7 +124,7 @@
 .panel-help:focus-visible,
 .panel-more-toggle:focus-visible {
   outline: none;
-  background: color-mix(in srgb, var(--theme-panel, #3346a8) 88%, var(--theme-primary, #3346a8));
+  background: color-mix(in srgb, var(--theme-on-panel, #fff) 14%, var(--theme-panel, #0b1220));
   color: var(--theme-on-panel, #fff);
 }
 
