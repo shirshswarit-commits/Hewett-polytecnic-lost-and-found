@@ -76,3 +76,56 @@ export const uploadImages = async (req, res) => {
     return sendError(res, err.message || 'Failed to upload images', 500);
   }
 };
+// ============================================
+// UPLOAD PROFILE PHOTO
+// ============================================
+export const uploadProfilePhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return sendError(res, 'No image file provided', 400);
+    }
+
+    const file = req.file;
+    const userId = req.user.id;
+
+    // File validate karo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return sendError(res, 'Only JPEG, PNG, and WEBP images are allowed', 400);
+    }
+
+    // Unique filename
+    const fileExt = file.originalname.split('.').pop();
+    const fileName = `profiles/${userId}-${Date.now()}.${fileExt}`;
+
+    // Supabase Storage mein upload
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('item-images')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true, // Agar pehle se hai toh replace kar do
+      });
+
+    if (uploadError) {
+      return sendError(res, uploadError.message, 400);
+    }
+
+    // Public URL
+    const { data: urlData } = supabaseAdmin.storage
+      .from('item-images')
+      .getPublicUrl(fileName);
+
+    const publicUrl = urlData.publicUrl;
+
+    // Database mein save karo
+    await supabaseAdmin
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', userId);
+
+    return sendSuccess(res, { avatar_url: publicUrl }, 'Profile photo updated successfully', 200);
+  } catch (err) {
+    console.error('❌ Profile upload error:', err.message);
+    return sendError(res, 'Failed to upload profile photo', 500);
+  }
+};
